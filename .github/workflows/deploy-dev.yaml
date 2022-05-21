@@ -2,10 +2,18 @@ name: Deploy on dev environment
 on:
   push:
     branches: [ master ]
+env:
+  BUILT_BRANCH: master
+  ECR_REPOSITORY: magicskunk
 jobs:
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
+    # Adding the permissions to the job allows the action that gets the credentials from AWS to store
+    # them for use in further steps. The permission that is specifically required is id-token: write.
+    permissions:
+      id-token: write
+      contents: read # This is required for actions/checkout@v2
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v3
@@ -17,3 +25,26 @@ jobs:
           java-version: '17'
       - name: Run Gradle build
         run: ./gradlew build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::847775666541:role/github-action-role
+          aws-region: eu-central-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ env.BUILT_BRANCH }}-${{ github.sha }}
+        run: |
+          # Build a docker image and
+          # push it to ECR so that it can be deployed to ECS.
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "built image $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
