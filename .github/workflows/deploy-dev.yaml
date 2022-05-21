@@ -47,10 +47,8 @@ jobs:
           JIB_TAG: ${{ env.JIB_TAG }}
         run: |
           ./gradlew jibDockerBuild
-          docker tag $JIB_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          # Build a docker image and
-          # push it to ECR so that it can be deployed to ECS.
-          # docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          # docker tag $JIB_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          # echo "built image $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "built image $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
