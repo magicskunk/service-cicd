@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: ${MAGICSKUNK_SERVICE_CICD_DB_URL:jdbc:postgresql://localhost:5432/magicskunk-servicecicd}
+    username: ${MAGICSKUNK_SERVICE_CICD_DB_USER:postgres}
+    password: ${MAGICSKUNK_SERVICE_CICD_DB_PASS:postgres}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        globally_quoted_identifiers: true
+        format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+
+logging:
+  level:
+    root: info
+    dev.karambol.servicecicd: debug
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, flyway, env, loggers, metrics
+  endpoint:
+    flyway:
+      enabled: true
+    info:
+      enabled: true
+    health:
+      probes:
+        enabled: true
+      show-details: always
+    env:
+      enabled: true
+    loggers:
+      enabled: true
+    metrics:
+      enabled: true

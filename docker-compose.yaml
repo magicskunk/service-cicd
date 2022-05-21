@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: magicskunk-service-cicd-app
+    depends_on:
+      - postgres
+    restart: on-failure
+    environment:
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/magicskunk-servicecicd
+      SPRING_PROFILE: local
+      AWS_USER_ACCESS_KEY: ${MAGICSKUNK_AWS_USER_ACCESS_KEY}
+      AWS_USER_SECRET_KEY: ${MAGICSKUNK_AWS_USER_SECRET_KEY}
+    ports:
+      - 9003:8080
+    profiles:
+      - app
+
+  postgres:
+    image: postgres:alpine
+    container_name: magicskunk-service-cicd-postgres
+    restart: on-failure
+    environment:
+      POSTGRES_DB: magicskunk-servicecicd
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    command: postgres -c listen_addresses='*'
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer
+    container_name: magicskunk-service-cicd-adminer
+    restart: on-failure
+    ports:
+      - "3031:8080"
+    profiles:
+      - tools

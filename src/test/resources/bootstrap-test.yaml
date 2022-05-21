@@ -1,0 +1,5 @@
+embedded:
+  postgresql:
+    reuseContainer: true
+    dockerImage: postgres:12-alpine
+    database: magicskunk-servicecicd
