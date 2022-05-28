@@ -8,6 +8,9 @@ env:
   JIB_TAG: magicskunk/service-cicd
   AWS_REGION: eu-central-1
   AWS_ROLE: arn:aws:iam::847775666541:role/github-actions-role
+  ARGO_CD_REPO: magicskunk/service-cicd-k8s
+  ARGO_CD_REPO_BRANCH: master
+  ARGO_CD_FILE_TO_UPDATE: k8s.yaml
 jobs:
   build:
     name: Build Docker Image
@@ -53,3 +56,39 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "built image $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+  deploy:
+    name: ArgoCD Deploy
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Checkout argoCD repo
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ env.ARGO_CD_REPO }}
+          ref: ${{ env.ARGO_CD_REPO_BRANCH }}
+
+      - name: Update k8s pod image
+        env:
+          IMAGE_TAG: ${{ env.BUILT_BRANCH }}-${{ github.sha }}
+        run: |
+          sed -i -r 's!image: .*amazonaws.com/magicskunk.*!image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG!' ${{ env.ARGO_CD_FILE_TO_UPDATE }}
+
+      - name: Commit files
+        uses: actions/checkout@v3
+        run: |
+          git config --local user.email github-actions
+          git config --local user.name github-actions@github.com
+          git add .
+          git commit -m "Update deployment" -a
+          git push
