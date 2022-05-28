@@ -85,7 +85,6 @@ jobs:
           sed -i -r 's!image: .*amazonaws.com/magicskunk.*!image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG!' ${{ env.ARGO_CD_FILE_TO_UPDATE }}
 
       - name: Commit files
-        uses: actions/checkout@v3
         run: |
           git config --local user.email github-actions
           git config --local user.name github-actions@github.com
